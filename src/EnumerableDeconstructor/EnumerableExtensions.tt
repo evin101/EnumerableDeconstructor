@@ -1,0 +1,51 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+<#  const int numberOfArgs = 20; #>
+using System;
+using System.Collections.Generic;
+
+namespace EnumerableDeconstructor
+{
+    public static class EnumerableExtensions
+    {
+		<# for (var i = 2; i <= numberOfArgs; i++) 
+		{ 
+			string[] argNames = Enumerable.Range(1, i).Select(e => "item" + e.ToString()).ToArray();
+		#>
+
+		public static void Deconstruct<T>(this IEnumerable<T> self, <#= string.Join(", ", argNames.Select(e => string.Format("out T {0}", e))) #>)
+        {
+            var e = self.GetEnumerator();
+<#
+			PushIndent("            ");
+			for (var index = 0; index < argNames.Length; index++) {
+				WriteLine(string.Format("Next(ref e, out {0});", argNames[index]));
+			}
+			ClearIndent();       
+#>
+        }
+
+
+		public static void Deconstruct<T>(this T[] self, <#= string.Join(", ", argNames.Select(e => string.Format("out T {0}", e))) #>)
+        {
+<#
+			PushIndent("            ");
+			for (var index = 0; index < argNames.Length; index++) {
+				WriteLine(string.Format("{0} = self[{1}];", argNames[index], index));
+			}
+			ClearIndent();       
+#>
+        }
+		<# } #>
+
+        private static void Next<T>(ref IEnumerator<T> e, out T item)
+        {
+            e.MoveNext();
+            item = e.Current;
+        }
+    }
+}
